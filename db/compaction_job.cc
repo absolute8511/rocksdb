@@ -1029,6 +1029,7 @@ Status CompactionJob::FinishCompactionOutputFile(
   if (s.ok()) {
     Slice lower_bound_guard, upper_bound_guard;
     const Slice *lower_bound, *upper_bound;
+    std::string smallest_user_key;
     if (sub_compact->outputs.size() == 1) {
       // For the first output table, include range tombstones before the min key
       // but after the subcompaction boundary.
@@ -1038,6 +1039,8 @@ Status CompactionJob::FinishCompactionOutputFile(
       // key onwards since the previous file was extended to contain range
       // tombstones falling before min key.
       lower_bound_guard = meta->smallest.user_key();
+      smallest_user_key = meta->smallest.user_key().ToString(false /*hex*/);
+      lower_bound_guard = Slice(smallest_user_key);
       lower_bound = &lower_bound_guard;
     } else {
       lower_bound = nullptr;

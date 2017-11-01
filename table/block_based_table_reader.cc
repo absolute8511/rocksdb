@@ -822,8 +822,10 @@ Status BlockBasedTable::ReadMetaBlock(Rep* rep,
   // it is an empty block.
   //  TODO: we never really verify check sum for meta index block
   std::unique_ptr<Block> meta;
+  ReadOptions read_options;
+  read_options.verify_checksums = false;
   Status s = ReadBlockFromFile(
-      rep->file.get(), rep->footer, ReadOptions(),
+      rep->file.get(), rep->footer, read_options,
       rep->footer.metaindex_handle(), &meta, rep->ioptions,
       true /* decompress */, Slice() /*compression dict*/,
       rep->persistent_cache_options, kDisableGlobalSequenceNumber,
@@ -1030,7 +1032,9 @@ FilterBlockReader* BlockBasedTable::ReadFilter(
     return nullptr;
   }
   BlockContents block;
-  if (!ReadBlockContents(rep->file.get(), rep->footer, ReadOptions(),
+  ReadOptions read_options;
+  read_options.verify_checksums = false;
+  if (!ReadBlockContents(rep->file.get(), rep->footer, read_options,
                          filter_handle, &block, rep->ioptions,
                          false /* decompress */, Slice() /*compression dict*/,
                          rep->persistent_cache_options)
