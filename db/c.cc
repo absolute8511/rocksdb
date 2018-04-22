@@ -137,7 +137,7 @@ struct rocksdb_column_family_handle_t  { ColumnFamilyHandle* rep; };
 struct rocksdb_envoptions_t      { EnvOptions        rep; };
 struct rocksdb_ingestexternalfileoptions_t  { IngestExternalFileOptions rep; };
 struct rocksdb_sstfilewriter_t   { SstFileWriter*    rep; };
-struct rocksdb_ratelimiter_t     { RateLimiter*      rep; };
+struct rocksdb_ratelimiter_t     { shared_ptr<RateLimiter>      rep; };
 struct rocksdb_pinnableslice_t {
   PinnableSlice rep;
 };
@@ -2474,8 +2474,9 @@ char *rocksdb_options_statistics_get_string(rocksdb_options_t *opt) {
 }
 
 void rocksdb_options_set_ratelimiter(rocksdb_options_t *opt, rocksdb_ratelimiter_t *limiter) {
-  opt->rep.rate_limiter.reset(limiter->rep);
-  limiter->rep = nullptr;
+  if (limiter) {
+    opt->rep.rate_limiter = limiter->rep;
+  }
 }
 
 rocksdb_ratelimiter_t* rocksdb_ratelimiter_create(
@@ -2483,15 +2484,12 @@ rocksdb_ratelimiter_t* rocksdb_ratelimiter_create(
     int64_t refill_period_us,
     int32_t fairness) {
   rocksdb_ratelimiter_t* rate_limiter = new rocksdb_ratelimiter_t;
-  rate_limiter->rep = NewGenericRateLimiter(rate_bytes_per_sec,
-                                            refill_period_us, fairness);
+  rate_limiter->rep.reset(NewGenericRateLimiter(rate_bytes_per_sec,
+                                            refill_period_us, fairness));
   return rate_limiter;
 }
 
 void rocksdb_ratelimiter_destroy(rocksdb_ratelimiter_t *limiter) {
-  if (limiter->rep) {
-    delete limiter->rep;
-  }
   delete limiter;
 }
 
