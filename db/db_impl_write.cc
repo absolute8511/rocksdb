@@ -69,8 +69,6 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
         "pipelined_writes is not compatible with concurrent prepares");
   }
 
-  uint64_t wbegin = env_->NowNanos();
-  uint64_t cost;
   Status status;
   if (write_options.low_pri) {
     status = ThrottleLowPriWritesIfNeeded(write_options, my_batch);
@@ -163,12 +161,6 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
   log::Writer* log_writer = logs_.back().writer;
 
   mutex_.Unlock();
-  cost = (env_->NowNanos() - wbegin);
-  if ( cost >= 100000000) {
-    ROCKS_LOG_WARN(
-        immutable_db_options_.info_log,
-        "db write prepare slow %llu", cost);
-  }
 
   // Add to log and apply to memtable.  We can release the lock
   // during this phase since &w is currently responsible for logging
@@ -234,13 +226,6 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
 
     PERF_TIMER_STOP(write_pre_and_post_process_time);
 
-  cost = (env_->NowNanos() - wbegin);
-  if ( cost >= 100000000) {
-    ROCKS_LOG_WARN(
-        immutable_db_options_.info_log,
-        "db write before wal slow %llu", cost);
-  }
-
     if (!concurrent_prepare_) {
       if (status.ok() && !write_options.disableWAL) {
         PERF_TIMER_GUARD(write_wal_time);
@@ -259,13 +244,6 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
         last_sequence = versions_->FetchAddLastToBeWrittenSequence(total_count);
       }
     }
-    cost = (env_->NowNanos() - wbegin);
-    if ( cost >= 100000000) {
-      ROCKS_LOG_WARN(
-          immutable_db_options_.info_log,
-          "db write wal slow %llu", cost);
-    }
-
     assert(last_sequence != kMaxSequenceNumber);
     const SequenceNumber current_sequence = last_sequence + 1;
     last_sequence += total_count;
@@ -310,12 +288,7 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
     }
   }
   PERF_TIMER_START(write_pre_and_post_process_time);
-  cost = (env_->NowNanos() - wbegin);
-  if ( cost >= 100000000) {
-    ROCKS_LOG_WARN(
-        immutable_db_options_.info_log,
-        "db write memtable slow %llu, %llu", cost, wbegin);
-  }
+
   if (!w.CallbackFailed()) {
     WriteCallbackStatusCheck(status);
   }
@@ -351,12 +324,6 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
 
   if (status.ok()) {
     status = w.FinalStatus();
-  }
-  cost = (env_->NowNanos() - wbegin);
-  if ( cost >= 100000000) {
-    ROCKS_LOG_WARN(
-        immutable_db_options_.info_log,
-        "db write final slow %llu, %llu", cost, wbegin);
   }
   return status;
 }
