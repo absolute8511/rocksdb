@@ -120,7 +120,9 @@ struct rocksdb_flushoptions_t    { FlushOptions      rep; };
 struct rocksdb_fifo_compaction_options_t { CompactionOptionsFIFO rep; };
 struct rocksdb_readoptions_t {
    ReadOptions rep;
-   Slice upper_bound; // stack variable to set pointer to in ReadOptions
+   // stack variable to set pointer to in ReadOptions
+   Slice upper_bound; 
+   Slice lower_bound;
 };
 struct rocksdb_writeoptions_t    { WriteOptions      rep; };
 struct rocksdb_options_t         { Options           rep; };
@@ -2882,10 +2884,22 @@ void rocksdb_readoptions_set_iterate_upper_bound(
   if (key == nullptr) {
     opt->upper_bound = Slice();
     opt->rep.iterate_upper_bound = nullptr;
-
   } else {
     opt->upper_bound = Slice(key, keylen);
     opt->rep.iterate_upper_bound = &opt->upper_bound;
+  }
+}
+
+void rocksdb_readoptions_set_iterate_lower_bound(
+    rocksdb_readoptions_t *opt,
+    const char* key, size_t keylen) {
+  if (key == nullptr) {
+    opt->lower_bound = Slice();
+    // TODO: wait merge from rocksdb
+    //opt->rep.iterate_lower_bound = nullptr;
+  } else {
+    opt->lower_bound = Slice(key, keylen);
+    //opt->rep.iterate_lower_bound = &opt->lower_bound;
   }
 }
 
@@ -2904,6 +2918,11 @@ void rocksdb_readoptions_set_readahead_size(
   opt->rep.readahead_size = v;
 }
 
+void rocksdb_readoptions_set_prefix_same_as_start(
+    rocksdb_readoptions_t* opt, unsigned char v) {
+  opt->rep.prefix_same_as_start = v;
+}
+
 void rocksdb_readoptions_set_pin_data(rocksdb_readoptions_t* opt,
                                       unsigned char v) {
   opt->rep.pin_data = v;
@@ -2912,6 +2931,22 @@ void rocksdb_readoptions_set_pin_data(rocksdb_readoptions_t* opt,
 void rocksdb_readoptions_set_total_order_seek(rocksdb_readoptions_t* opt,
                                               unsigned char v) {
   opt->rep.total_order_seek = v;
+}
+
+void rocksdb_readoptions_set_max_skippable_internal_keys(
+    rocksdb_readoptions_t* opt,
+    uint64_t v) {
+  opt->rep.max_skippable_internal_keys = v;
+}
+
+void rocksdb_readoptions_set_background_purge_on_iterator_cleanup(
+    rocksdb_readoptions_t* opt, unsigned char v) {
+  opt->rep.background_purge_on_iterator_cleanup = v;
+}
+
+void rocksdb_readoptions_set_ignore_range_deletions(
+    rocksdb_readoptions_t* opt, unsigned char v) {
+  opt->rep.ignore_range_deletions = v;
 }
 
 rocksdb_writeoptions_t* rocksdb_writeoptions_create() {
