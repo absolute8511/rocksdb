@@ -91,6 +91,8 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
   assert(!WriteBatchInternal::IsLatestPersistentState(my_batch) ||
          disable_memtable);
 
+  get_perf_context()->Reset();
+  uint64_t start = env_->NowNanos();
   Status status;
   if (write_options.low_pri) {
     status = ThrottleLowPriWritesIfNeeded(write_options, my_batch);
@@ -400,6 +402,12 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
 
   if (status.ok()) {
     status = w.FinalStatus();
+  }
+  uint64_t cost = env_->NowNanos() - start;
+  if (cost > 500*1000*1000) {
+    ROCKS_LOG_WARN(
+        immutable_db_options_.info_log,
+        "%llu slow write cost %llu, %s", start, cost, get_perf_context()->ToString(true).c_str());
   }
   return status;
 }

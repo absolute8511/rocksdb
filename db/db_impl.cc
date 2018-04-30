@@ -1016,6 +1016,9 @@ Status DBImpl::GetImpl(const ReadOptions& read_options,
                        PinnableSlice* pinnable_val, bool* value_found,
                        ReadCallback* callback, bool* is_blob_index) {
   assert(pinnable_val != nullptr);
+  get_perf_context()->Reset();
+  uint64_t start = env_->NowNanos();
+
   StopWatch sw(env_, stats_, DB_GET);
   PERF_TIMER_GUARD(get_snapshot_time);
 
@@ -1105,6 +1108,12 @@ Status DBImpl::GetImpl(const ReadOptions& read_options,
     RecordTick(stats_, BYTES_READ, size);
     MeasureTime(stats_, BYTES_PER_READ, size);
     PERF_COUNTER_ADD(get_read_bytes, size);
+  }
+  uint64_t cost = env_->NowNanos() - start;
+  if (cost > 500*1000*1000) {
+    ROCKS_LOG_WARN(
+        immutable_db_options_.info_log,
+        "%llu slow read cost %llu, %s", start, cost, get_perf_context()->ToString(true).c_str());
   }
   return s;
 }
