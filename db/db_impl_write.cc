@@ -91,6 +91,7 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
   assert(!WriteBatchInternal::IsLatestPersistentState(my_batch) ||
          disable_memtable);
 
+  SetPerfLevel(PerfLevel::kEnableTime);
   get_perf_context()->Reset();
   uint64_t start = env_->NowNanos();
   Status status;
@@ -409,6 +410,7 @@ Status DBImpl::WriteImpl(const WriteOptions& write_options,
         immutable_db_options_.info_log,
         "%llu slow write cost %llu, %s", start, cost, get_perf_context()->ToString(true).c_str());
   }
+  SetPerfLevel(PerfLevel::kDisable);
   return status;
 }
 

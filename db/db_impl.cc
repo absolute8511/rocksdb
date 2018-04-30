@@ -1016,6 +1016,8 @@ Status DBImpl::GetImpl(const ReadOptions& read_options,
                        PinnableSlice* pinnable_val, bool* value_found,
                        ReadCallback* callback, bool* is_blob_index) {
   assert(pinnable_val != nullptr);
+
+  SetPerfLevel(PerfLevel::kEnableTime);
   get_perf_context()->Reset();
   uint64_t start = env_->NowNanos();
 
@@ -1115,6 +1117,7 @@ Status DBImpl::GetImpl(const ReadOptions& read_options,
         immutable_db_options_.info_log,
         "%llu slow read cost %llu, %s", start, cost, get_perf_context()->ToString(true).c_str());
   }
+  SetPerfLevel(PerfLevel::kDisable);
   return s;
 }
 
