@@ -1030,6 +1030,43 @@ void rocksdb_approximate_sizes_cf(
   delete[] ranges;
 }
 
+void rocksdb_approximate_memtable_sizes(
+    rocksdb_t* db,
+    int num_ranges,
+    const char* const* range_start_key, const size_t* range_start_key_len,
+    const char* const* range_limit_key, const size_t* range_limit_key_len,
+    uint64_t* sizes) {
+  Range* ranges = new Range[num_ranges];
+  for (int i = 0; i < num_ranges; i++) {
+    ranges[i].start = Slice(range_start_key[i], range_start_key_len[i]);
+    ranges[i].limit = Slice(range_limit_key[i], range_limit_key_len[i]);
+    uint64_t count;
+    uint64_t size;
+    db->rep->GetApproximateMemTableStats(ranges[i], &count, &size);
+    sizes[i] += size;
+  }
+  delete[] ranges;
+}
+
+void rocksdb_approximate_memtable_sizes_cf(
+    rocksdb_t* db,
+    rocksdb_column_family_handle_t* column_family,
+    int num_ranges,
+    const char* const* range_start_key, const size_t* range_start_key_len,
+    const char* const* range_limit_key, const size_t* range_limit_key_len,
+    uint64_t* sizes) {
+  Range* ranges = new Range[num_ranges];
+  for (int i = 0; i < num_ranges; i++) {
+    ranges[i].start = Slice(range_start_key[i], range_start_key_len[i]);
+    ranges[i].limit = Slice(range_limit_key[i], range_limit_key_len[i]);
+    uint64_t count;
+    uint64_t size;
+    db->rep->GetApproximateMemTableStats(column_family->rep, ranges[i], &count, &size);
+    sizes[i] += size;
+  }
+  delete[] ranges;
+}
+
 void rocksdb_delete_file(
     rocksdb_t* db,
     const char* name) {
