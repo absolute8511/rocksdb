@@ -1067,6 +1067,25 @@ void rocksdb_approximate_memtable_sizes_cf(
   delete[] ranges;
 }
 
+uint64_t rocksdb_get_table_property_keynum_in_ranges(
+    rocksdb_t* db,
+    int num_ranges,
+    const char* const* range_start_key, const size_t* range_start_key_len,
+    const char* const* range_limit_key, const size_t* range_limit_key_len) {
+  Range* ranges = new Range[num_ranges];
+  for (int i = 0; i < num_ranges; i++) {
+    ranges[i].start = Slice(range_start_key[i], range_start_key_len[i]);
+    ranges[i].limit = Slice(range_limit_key[i], range_limit_key_len[i]);
+  }
+  rocksdb::TablePropertiesCollection props;
+  uint64_t total = 0;
+  db->rep->GetPropertiesOfTablesInRange(db->rep->DefaultColumnFamily(), ranges, num_ranges, &props);
+  for (const auto& n : props) {
+    total += n.second->num_entries;
+  }
+  return total;
+}
+
 void rocksdb_delete_file(
     rocksdb_t* db,
     const char* name) {
