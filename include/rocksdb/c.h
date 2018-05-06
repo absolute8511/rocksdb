@@ -347,6 +347,12 @@ extern ROCKSDB_LIBRARY_API void rocksdb_approximate_memtable_sizes_cf(
     const size_t* range_start_key_len, const char* const* range_limit_key,
     const size_t* range_limit_key_len, uint64_t* sizes);
 
+extern ROCKSDB_LIBRARY_API uint64_t rocksdb_get_table_property_keynum_in_ranges(
+    rocksdb_t* db,
+    int num_ranges,
+    const char* const* range_start_key, const size_t* range_start_key_len,
+    const char* const* range_limit_key, const size_t* range_limit_key_len);
+
 extern ROCKSDB_LIBRARY_API void rocksdb_compact_range(rocksdb_t* db,
                                                       const char* start_key,
                                                       size_t start_key_len,
