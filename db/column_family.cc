@@ -428,7 +428,7 @@ ColumnFamilyData::ColumnFamilyData(
       flush_reason_(FlushReason::kOthers),
       column_family_set_(column_family_set),
       queued_for_flush_(false),
-      pending_compaction_(false),
+      queued_for_compaction_(false),
       prev_compaction_needed_bytes_(0),
       allow_2pc_(db_options.allow_2pc),
       last_memtable_id_(0) {
@@ -505,7 +505,7 @@ ColumnFamilyData::~ColumnFamilyData() {
   // It would be wrong if this ColumnFamilyData is in flush_queue_ or
   // compaction_queue_ and we destroyed it
   assert(!queued_for_flush_);
-  assert(!pending_compaction_);
+  assert(!queued_for_compaction_);
 
   if (super_version_ != nullptr) {
     // Release SuperVersion reference kept in ThreadLocalPtr.
@@ -558,7 +558,9 @@ uint64_t ColumnFamilyData::OldestLogToKeep() {
   auto current_log = GetLogNumber();
 
   if (allow_2pc_) {
-    auto imm_prep_log = imm()->GetMinLogContainingPrepSection();
+    autovector<MemTable*> empty_list;
+    auto imm_prep_log =
+        imm()->PrecomputeMinLogContainingPrepSection(empty_list);
     auto mem_prep_log = mem()->GetMinLogContainingPrepSection();
 
     if (imm_prep_log > 0 && imm_prep_log < current_log) {
@@ -995,11 +997,13 @@ const int ColumnFamilyData::kCompactToBaseLevel = -2;
 
 Compaction* ColumnFamilyData::CompactRange(
     const MutableCFOptions& mutable_cf_options, int input_level,
-    int output_level, uint32_t output_path_id, const InternalKey* begin,
-    const InternalKey* end, InternalKey** compaction_end, bool* conflict) {
+    int output_level, uint32_t output_path_id, uint32_t max_subcompactions,
+    const InternalKey* begin, const InternalKey* end,
+    InternalKey** compaction_end, bool* conflict) {
   auto* result = compaction_picker_->CompactRange(
       GetName(), mutable_cf_options, current_->storage_info(), input_level,
-      output_level, output_path_id, begin, end, compaction_end, conflict);
+      output_level, output_path_id, max_subcompactions, begin, end,
+      compaction_end, conflict);
   if (result != nullptr) {
     result->SetInputVersion(current_);
   }

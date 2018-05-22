@@ -862,6 +862,8 @@ TEST_P(DBIteratorTest, IteratorPinsRef) {
   } while (ChangeCompactOptions());
 }
 
+// SetOptions not defined in ROCKSDB LITE
+#ifndef ROCKSDB_LITE
 TEST_P(DBIteratorTest, DBIteratorBoundTest) {
   Options options = CurrentOptions();
   options.env = env_;
@@ -946,9 +948,7 @@ TEST_P(DBIteratorTest, DBIteratorBoundTest) {
   }
 
   // prefix is the first letter of the key
-  options.prefix_extractor.reset(NewFixedPrefixTransform(1));
-
-  DestroyAndReopen(options);
+  ASSERT_OK(dbfull()->SetOptions({{"prefix_extractor", "fixed:1"}}));
   ASSERT_OK(Put("a", "0"));
   ASSERT_OK(Put("foo", "bar"));
   ASSERT_OK(Put("foo1", "bar1"));
@@ -1035,6 +1035,7 @@ TEST_P(DBIteratorTest, DBIteratorBoundTest) {
     ASSERT_EQ(static_cast<int>(get_perf_context()->internal_delete_skipped_count), 0);
   }
 }
+#endif
 
 TEST_P(DBIteratorTest, DBIteratorBoundOptimizationTest) {
   int upper_bound_hits = 0;
@@ -2230,6 +2231,46 @@ TEST_P(DBIteratorTest, SeekAfterHittingManyInternalKeys) {
 
   ASSERT_EQ(iter2->key().ToString(), "6");
   ASSERT_EQ(iter2->value().ToString(), "val_6");
+}
+
+// Reproduces a former bug where iterator would skip some records when DBIter
+// re-seeks subiterator with Incomplete status.
+TEST_P(DBIteratorTest, NonBlockingIterationBugRepro) {
+  Options options = CurrentOptions();
+  BlockBasedTableOptions table_options;
+  // Make sure the sst file has more than one block.
+  table_options.flush_block_policy_factory =
+      std::make_shared<FlushBlockEveryKeyPolicyFactory>();
+  options.table_factory.reset(NewBlockBasedTableFactory(table_options));
+  DestroyAndReopen(options);
+
+  // Two records in sst file, each in its own block.
+  Put("b", "");
+  Put("d", "");
+  Flush();
+
+  // Create a nonblocking iterator before writing to memtable.
+  ReadOptions ropt;
+  ropt.read_tier = kBlockCacheTier;
+  unique_ptr<Iterator> iter(NewIterator(ropt));
+
+  // Overwrite a key in memtable many times to hit
+  // max_sequential_skip_in_iterations (which is 8 by default).
+  for (int i = 0; i < 20; ++i) {
+    Put("c", "");
+  }
+
+  // Load the second block in sst file into the block cache.
+  {
+    unique_ptr<Iterator> iter2(NewIterator(ReadOptions()));
+    iter2->Seek("d");
+  }
+
+  // Finally seek the nonblocking iterator.
+  iter->Seek("a");
+  // With the bug, the status used to be OK, and the iterator used to point to
+  // "d".
+  EXPECT_TRUE(iter->status().IsIncomplete());
 }
 
 INSTANTIATE_TEST_CASE_P(DBIteratorTestInstance, DBIteratorTest,

@@ -522,6 +522,8 @@ DEFINE_uint64(log2_keys_per_lock, 2, "Log2 of number of keys per lock");
 static const bool FLAGS_log2_keys_per_lock_dummy __attribute__((__unused__)) =
     RegisterFlagValidator(&FLAGS_log2_keys_per_lock, &ValidateUint32Range);
 
+DEFINE_uint64(max_manifest_file_size, 16384, "Maximum size of a MANIFEST file");
+
 DEFINE_bool(in_place_update, false, "On true, does inplace update in memtable");
 
 enum RepFactory {
@@ -857,7 +859,7 @@ class SharedState {
             "Cannot use --expected_values_path on when "
             "--clear_column_family_one_in is greater than zero.");
       }
-      size_t size;
+      uint64_t size = 0;
       if (status.ok()) {
         status = FLAGS_env->GetFileSize(FLAGS_expected_values_path, &size);
       }
@@ -888,8 +890,9 @@ class SharedState {
       }
     }
     if (values_ == nullptr) {
-      values_ =
-          static_cast<std::atomic<uint32_t>*>(malloc(expected_values_size));
+      values_allocation_.reset(
+          new std::atomic<uint32_t>[FLAGS_column_families * max_key_]);
+      values_ = &values_allocation_[0];
       values_init_needed = true;
     }
     assert(values_ != nullptr);
@@ -1071,8 +1074,12 @@ class SharedState {
   }
 
   bool Exists(int cf, int64_t key) {
+    // UNKNOWN_SENTINEL counts as exists. That assures a key for which overwrite
+    // is disallowed can't be accidentally added a second time, in which case
+    // SingleDelete wouldn't be able to properly delete the key. It does allow
+    // the case where a SingleDelete might be added which covers nothing, but
+    // that's not a correctness issue.
     uint32_t expected_value = Value(cf, key).load();
-    assert(expected_value != UNKNOWN_SENTINEL);
     return expected_value != DELETION_SENTINEL;
   }
 
@@ -1112,6 +1119,7 @@ class SharedState {
   std::vector<std::unordered_set<size_t> > no_overwrite_ids_;
 
   std::atomic<uint32_t>* values_;
+  std::unique_ptr<std::atomic<uint32_t>[]> values_allocation_;
   // Has to make it owned by a smart ptr as port::Mutex is not copyable
   // and storing it in the container may require copying depending on the impl.
   std::vector<std::vector<std::unique_ptr<port::Mutex> > > key_locks_;
@@ -2595,7 +2603,7 @@ class StressTest {
           FLAGS_level0_file_num_compaction_trigger;
       options_.compression = FLAGS_compression_type_e;
       options_.create_if_missing = true;
-      options_.max_manifest_file_size = 10 * 1024;
+      options_.max_manifest_file_size = FLAGS_max_manifest_file_size;
       options_.inplace_update_support = FLAGS_in_place_update;
       options_.max_subcompactions = static_cast<uint32_t>(FLAGS_subcompactions);
       options_.allow_concurrent_memtable_write =

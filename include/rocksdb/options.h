@@ -271,7 +271,7 @@ struct ColumnFamilyOptions : public AdvancedColumnFamilyOptions {
   // later in the vector.
   // Note that, if a path is supplied to multiple column
   // families, it would have files and total size from all
-  // the column families combined. User should privision for the
+  // the column families combined. User should provision for the
   // total size(from all the column families) in such cases.
   //
   // If left empty, db_paths will be used.
@@ -558,8 +558,9 @@ struct DBOptions {
 
   // manifest file is rolled over on reaching this limit.
   // The older manifest file be deleted.
-  // The default value is MAX_INT so that roll-over does not take place.
-  uint64_t max_manifest_file_size = std::numeric_limits<uint64_t>::max();
+  // The default value is 1GB so that the manifest file can grow, but not
+  // reach the limit of storage capacity.
+  uint64_t max_manifest_file_size = 1024 * 1024 * 1024;
 
   // Number of shards used for table cache.
   int table_cache_numshardbits = 6;
@@ -604,13 +605,13 @@ struct DBOptions {
   // buffered. The hardware buffer of the devices may however still
   // be used. Memory mapped files are not impacted by these parameters.
 
-  // Use O_DIRECT for user reads
+  // Use O_DIRECT for user and compaction reads.
+  // When true, we also force new_table_reader_for_compaction_inputs to true.
   // Default: false
   // Not supported in ROCKSDB_LITE mode!
   bool use_direct_reads = false;
 
-  // Use O_DIRECT for both reads and writes in background flush and compactions
-  // When true, we also force new_table_reader_for_compaction_inputs to true.
+  // Use O_DIRECT for writes in background flush and compactions.
   // Default: false
   // Not supported in ROCKSDB_LITE mode!
   bool use_direct_io_for_flush_and_compaction = false;
@@ -1185,10 +1186,13 @@ struct CompactionOptions {
   // Compaction will create files of size `output_file_size_limit`.
   // Default: MAX, which means that compaction will create a single file
   uint64_t output_file_size_limit;
+  // If > 0, it will replace the option in the DBOptions for this compaction.
+  uint32_t max_subcompactions;
 
   CompactionOptions()
       : compression(kSnappyCompression),
-        output_file_size_limit(std::numeric_limits<uint64_t>::max()) {}
+        output_file_size_limit(std::numeric_limits<uint64_t>::max()),
+        max_subcompactions(0) {}
 };
 
 // For level based compaction, we can configure if we want to skip/force
@@ -1224,6 +1228,8 @@ struct CompactRangeOptions {
   // If true, will execute immediately even if doing so would cause the DB to
   // enter write stall mode. Otherwise, it'll sleep until load is low enough.
   bool allow_write_stall = false;
+  // If > 0, it will replace the option in the DBOptions for this compaction.
+  uint32_t max_subcompactions = 0;
 };
 
 // IngestExternalFileOptions is used by IngestExternalFile()

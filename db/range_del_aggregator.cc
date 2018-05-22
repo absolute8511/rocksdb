@@ -195,6 +195,10 @@ Status RangeDelAggregator::AddTombstones(
   input->SeekToFirst();
   bool first_iter = true;
   while (input->Valid()) {
+    // The tombstone map holds slices into the iterator's memory. This assert
+    // ensures pinning the iterator also pins the keys/values.
+    assert(input->IsKeyPinned() && input->IsValuePinned());
+
     if (first_iter) {
       if (rep_ == nullptr) {
         InitRep({upper_bound_});
@@ -534,6 +538,13 @@ bool RangeDelAggregator::IsEmpty() {
     }
   }
   return true;
+}
+
+bool RangeDelAggregator::AddFile(uint64_t file_number) {
+  if (rep_ == nullptr) {
+    return true;
+  }
+  return rep_->added_files_.emplace(file_number).second;
 }
 
 }  // namespace rocksdb
