@@ -853,6 +853,12 @@ extern ROCKSDB_LIBRARY_API void rocksdb_options_set_allow_mmap_writes(
 extern ROCKSDB_LIBRARY_API void rocksdb_options_set_use_direct_reads(
     rocksdb_options_t*, unsigned char);
 extern ROCKSDB_LIBRARY_API void
+rocksdb_options_set_enable_pipelined_write(rocksdb_options_t*, unsigned char);
+extern ROCKSDB_LIBRARY_API void
+rocksdb_options_set_max_subcompactions(rocksdb_options_t*, uint32_t);
+extern ROCKSDB_LIBRARY_API void
+rocksdb_options_set_memtable_insert_with_hint_fixed_length_prefix_extractor(rocksdb_options_t* opt,size_t length);
+extern ROCKSDB_LIBRARY_API void
 rocksdb_options_set_use_direct_io_for_flush_and_compaction(rocksdb_options_t*,
                                                            unsigned char);
 extern ROCKSDB_LIBRARY_API void rocksdb_options_set_is_fd_close_on_exec(

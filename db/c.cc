@@ -2236,6 +2236,20 @@ void rocksdb_options_set_use_fsync(
   opt->rep.use_fsync = use_fsync;
 }
 
+void rocksdb_options_set_enable_pipelined_write(rocksdb_options_t* opt,
+                                                unsigned char v) {
+  opt->rep.enable_pipelined_write = v;
+}
+
+void rocksdb_options_set_max_subcompactions(rocksdb_options_t* opt, uint32_t v) {
+  opt->rep.max_subcompactions = v;
+}
+
+void rocksdb_options_set_memtable_insert_with_hint_fixed_length_prefix_extractor(rocksdb_options_t* opt,
+                                                                                 size_t length) {
+  opt->rep.memtable_insert_with_hint_prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(length));
+}
+
 void rocksdb_options_set_db_log_dir(
     rocksdb_options_t* opt, const char* db_log_dir) {
   opt->rep.db_log_dir = db_log_dir;
