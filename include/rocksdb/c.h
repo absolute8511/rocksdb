@@ -851,6 +851,8 @@ extern ROCKSDB_LIBRARY_API void rocksdb_options_set_enable_pipelined_write(
     rocksdb_options_t*, unsigned char);
 extern ROCKSDB_LIBRARY_API void rocksdb_options_set_max_subcompactions(
     rocksdb_options_t*, uint32_t);
+extern ROCKSDB_LIBRARY_API void
+rocksdb_options_set_memtable_insert_with_hint_fixed_length_prefix_extractor(rocksdb_options_t* opt,size_t length);
 extern ROCKSDB_LIBRARY_API void rocksdb_options_set_max_background_jobs(
     rocksdb_options_t*, int);
 extern ROCKSDB_LIBRARY_API void rocksdb_options_set_max_background_compactions(

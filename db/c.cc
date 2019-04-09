@@ -2514,6 +2514,11 @@ void rocksdb_options_set_max_subcompactions(rocksdb_options_t* opt,
   opt->rep.max_subcompactions = n;
 }
 
+void rocksdb_options_set_memtable_insert_with_hint_fixed_length_prefix_extractor(rocksdb_options_t* opt,
+                                                                                 size_t length) {
+  opt->rep.memtable_insert_with_hint_prefix_extractor.reset(rocksdb::NewFixedPrefixTransform(length));
+}
+
 void rocksdb_options_set_max_background_jobs(rocksdb_options_t* opt, int n) {
   opt->rep.max_background_jobs = n;
 }
