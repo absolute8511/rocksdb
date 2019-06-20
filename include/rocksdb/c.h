@@ -237,6 +237,7 @@ extern ROCKSDB_LIBRARY_API void rocksdb_column_family_handle_destroy(
     rocksdb_column_family_handle_t*);
 
 extern ROCKSDB_LIBRARY_API void rocksdb_close(rocksdb_t* db);
+extern ROCKSDB_LIBRARY_API void rocksdb_shutdown(rocksdb_t* db);
 
 extern ROCKSDB_LIBRARY_API void rocksdb_put(
     rocksdb_t* db, const rocksdb_writeoptions_t* options, const char* key,
@@ -1590,6 +1591,8 @@ rocksdb_transactiondb_create_iterator(rocksdb_transactiondb_t* txn_db,
 
 extern ROCKSDB_LIBRARY_API void rocksdb_transactiondb_close(
     rocksdb_transactiondb_t* txn_db);
+extern ROCKSDB_LIBRARY_API void rocksdb_transactiondb_shutdown(
+    rocksdb_transactiondb_t* txn_db);
 
 extern ROCKSDB_LIBRARY_API rocksdb_checkpoint_t*
 rocksdb_transactiondb_checkpoint_object_create(rocksdb_transactiondb_t* txn_db,
@@ -1621,6 +1624,8 @@ rocksdb_optimistictransaction_begin(
     rocksdb_transaction_t* old_txn);
 
 extern ROCKSDB_LIBRARY_API void rocksdb_optimistictransactiondb_close(
+    rocksdb_optimistictransactiondb_t* otxn_db);
+extern ROCKSDB_LIBRARY_API void rocksdb_optimistictransactiondb_shutdown(
     rocksdb_optimistictransactiondb_t* otxn_db);
 
 /* Transaction Options */

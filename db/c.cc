@@ -657,6 +657,10 @@ void rocksdb_checkpoint_object_destroy(rocksdb_checkpoint_t* checkpoint) {
   delete checkpoint;
 }
 
+void rocksdb_shutdown(rocksdb_t* db) {
+  db->rep->Close();
+}
+
 void rocksdb_close(rocksdb_t* db) {
   delete db->rep;
   delete db;
@@ -4041,6 +4045,10 @@ rocksdb_iterator_t* rocksdb_transactiondb_create_iterator(
   return result;
 }
 
+void rocksdb_transactiondb_shutdown(rocksdb_transactiondb_t* txn_db) {
+  txn_db->rep->Close();
+}
+
 void rocksdb_transactiondb_close(rocksdb_transactiondb_t* txn_db) {
   delete txn_db->rep;
   delete txn_db;
@@ -4134,6 +4142,11 @@ rocksdb_transaction_t* rocksdb_optimistictransaction_begin(
   old_txn->rep = otxn_db->rep->BeginTransaction(
       write_options->rep, otxn_options->rep, old_txn->rep);
   return old_txn;
+}
+
+void rocksdb_optimistictransactiondb_shutdown(
+    rocksdb_optimistictransactiondb_t* otxn_db) {
+  otxn_db->rep->Close();
 }
 
 void rocksdb_optimistictransactiondb_close(
