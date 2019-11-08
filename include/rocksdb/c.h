@@ -1022,6 +1022,9 @@ extern ROCKSDB_LIBRARY_API rocksdb_ratelimiter_t* rocksdb_ratelimiter_create(
     int64_t rate_bytes_per_sec, int64_t refill_period_us, int32_t fairness);
 extern ROCKSDB_LIBRARY_API void rocksdb_ratelimiter_destroy(rocksdb_ratelimiter_t*);
 
+extern ROCKSDB_LIBRARY_API void rocksdb_options_set_ratelimiter_bytes_per_second(
+    rocksdb_ratelimiter_t *limiter, int64_t bytes_per_sec);
+
 /* PerfContext */
 enum {
   rocksdb_uninitialized = 0,

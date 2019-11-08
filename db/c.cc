@@ -2708,6 +2708,12 @@ void rocksdb_options_set_ratelimiter(rocksdb_options_t *opt, rocksdb_ratelimiter
   }
 }
 
+void rocksdb_options_set_ratelimiter_bytes_per_second(rocksdb_ratelimiter_t *limiter, int64_t bytes_per_sec) {
+  if (limiter && limiter->rep) {
+    limiter->rep->SetBytesPerSecond(bytes_per_sec);
+  }
+}
+
 rocksdb_ratelimiter_t* rocksdb_ratelimiter_create(
     int64_t rate_bytes_per_sec,
     int64_t refill_period_us,
