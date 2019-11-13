@@ -2127,6 +2127,15 @@ void rocksdb_set_options(
             db->rep->SetOptions(options_map));
     }
 
+void rocksdb_set_db_options(
+    rocksdb_t* db, int count, const char* const keys[], const char* const values[], char** errptr) {
+        std::unordered_map<std::string, std::string> options_map;
+        for (int i=0; i<count; i++)
+            options_map[keys[i]] = values[i];
+        SaveError(errptr,
+            db->rep->SetDBOptions(options_map));
+    }
+
 rocksdb_options_t* rocksdb_options_create() {
   return new rocksdb_options_t;
 }
