@@ -2800,6 +2800,12 @@ void rocksdb_ratelimiter_destroy(rocksdb_ratelimiter_t *limiter) {
   delete limiter;
 }
 
+void rocksdb_options_set_ratelimiter_bytes_per_second(rocksdb_ratelimiter_t *limiter, int64_t bytes_per_sec) {
+  if (limiter && limiter->rep) {
+    limiter->rep->SetBytesPerSecond(bytes_per_sec);
+  }
+}
+
 void rocksdb_set_perf_level(int v) {
   PerfLevel level = static_cast<PerfLevel>(v);
   SetPerfLevel(level);
