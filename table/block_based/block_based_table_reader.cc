@@ -1616,8 +1616,10 @@ Status BlockBasedTable::ReadMetaBlock(FilePrefetchBuffer* prefetch_buffer,
   // TODO(sanjay): Skip this if footer.metaindex_handle() size indicates
   // it is an empty block.
   std::unique_ptr<Block> meta;
+  ReadOptions read_options;
+  read_options.verify_checksums = false;
   Status s = ReadBlockFromFile(
-      rep_->file.get(), prefetch_buffer, rep_->footer, ReadOptions(),
+      rep_->file.get(), prefetch_buffer, rep_->footer, read_options,
       rep_->footer.metaindex_handle(), &meta, rep_->ioptions,
       true /* decompress */, true /*maybe_compressed*/, BlockType::kMetaIndex,
       UncompressionDict::GetEmptyDict(), rep_->persistent_cache_options,
