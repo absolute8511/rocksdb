@@ -768,6 +768,9 @@ extern ROCKSDB_LIBRARY_API void rocksdb_set_options(
 extern ROCKSDB_LIBRARY_API void rocksdb_set_options_cf(
     rocksdb_t* db, rocksdb_column_family_handle_t* handle, int count, const char* const keys[], const char* const values[], char** errptr);
 
+extern ROCKSDB_LIBRARY_API void rocksdb_set_db_options(
+    rocksdb_t* db, int count, const char* const keys[], const char* const values[], char** errptr);
+
 extern ROCKSDB_LIBRARY_API rocksdb_options_t* rocksdb_options_create();
 extern ROCKSDB_LIBRARY_API void rocksdb_options_destroy(rocksdb_options_t*);
 extern ROCKSDB_LIBRARY_API void rocksdb_options_increase_parallelism(
